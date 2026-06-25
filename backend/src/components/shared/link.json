@@ -11,6 +11,9 @@
     "label": {
       "type": "string"
     },
+    "nav_description": {
+      "type": "string"
+    },
     "isExternal": {
       "type": "boolean",
       "default": false
@@ -40,6 +43,16 @@
       },
       "required": false,
       "default": false
+    },
+    "dropdownItems": {
+      "type": "component",
+      "component": "shared.dropdown-item",
+      "repeatable": true
+    },
+    "menuDetail": {
+      "type": "component",
+      "component": "shared.menu-detail",
+      "repeatable": true
     }
   },
   "config": {}

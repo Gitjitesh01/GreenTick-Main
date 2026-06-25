@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_shared_our_products",
+  "info": {
+    "displayName": "Our Product"
+  },
+  "options": {},
+  "attributes": {
+    "product_image": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

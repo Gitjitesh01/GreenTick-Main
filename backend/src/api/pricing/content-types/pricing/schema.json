@@ -1,0 +1,45 @@
+{
+  "kind": "singleType",
+  "collectionName": "pricings",
+  "info": {
+    "singularName": "pricing",
+    "pluralName": "pricings",
+    "displayName": "Pricing"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Pricing_Hero": {
+      "type": "component",
+      "component": "shared.pricing-hero",
+      "repeatable": false
+    },
+    "pricingPlansSection": {
+      "type": "component",
+      "component": "shared.pricing-plans-section",
+      "repeatable": false
+    },
+    "pricing_plans": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pricing-plan.pricing-plan"
+    },
+    "metaConversationFees": {
+      "type": "component",
+      "component": "shared.meta-pricing-section",
+      "repeatable": false
+    },
+    "comparison_Section": {
+      "type": "component",
+      "component": "shared.comparison-section",
+      "repeatable": false
+    },
+    "FAQ": {
+      "type": "component",
+      "component": "shared.faq-item",
+      "repeatable": false
+    }
+  }
+}

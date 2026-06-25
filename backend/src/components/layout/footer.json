@@ -22,6 +22,11 @@
     },
     "text": {
       "type": "text"
+    },
+    "Our_Product": {
+      "type": "component",
+      "component": "shared.our-product",
+      "repeatable": true
     }
   },
   "config": {}

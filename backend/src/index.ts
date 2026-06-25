@@ -1,20 +1,36 @@
-// import type { Core } from '@strapi/strapi';
+import type { Core } from '@strapi/strapi';
 
 export default {
-  /**
-   * An asynchronous register function that runs before
-   * your application is initialized.
-   *
-   * This gives you an opportunity to extend code.
-   */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register() {},
 
-  /**
-   * An asynchronous bootstrap function that runs before
-   * your application gets started.
-   *
-   * This gives you an opportunity to set up your data model,
-   * run jobs, or perform some special logic.
-   */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    // Grant create permission for newsletter-subscriber to public role
+    try {
+      const publicRole = await strapi.query('plugin::users-permissions.role').findOne({
+        where: { type: 'public' },
+      });
+
+      if (publicRole) {
+        const permissionAction = 'api::newsletter-subscriber.newsletter-subscriber.create';
+        const permissionExists = await strapi.query('plugin::users-permissions.permission').findOne({
+          where: {
+            action: permissionAction,
+            role: publicRole.id,
+          },
+        });
+
+        if (!permissionExists) {
+          await strapi.query('plugin::users-permissions.permission').create({
+            data: {
+              action: permissionAction,
+              role: publicRole.id,
+            },
+          });
+          strapi.log.info('Granted public create permission for newsletter-subscriber');
+        }
+      }
+    } catch (error) {
+      strapi.log.error('Failed to grant public create permission for newsletter-subscriber:', error);
+    }
+  },
 };

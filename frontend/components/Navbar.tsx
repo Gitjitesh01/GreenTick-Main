@@ -2,11 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight, ExternalLink, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { getStrapiMediaUrl, type HeaderComponent, type NavigationPluginItem } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SolutionsMegaMenu } from './solutions-mega-menu';
+import { FeaturesMegaMenu } from './features-mega-menu';
+import { AiGreenTickLogo } from './logo';
 
 interface NavbarProps {
   headerData: HeaderComponent | null;
@@ -16,385 +24,591 @@ interface NavbarProps {
 
 export default function Navbar({ headerData, siteName, navItems }: NavbarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const isHomepage = pathname === "/";
 
-  // Track scroll state to apply glassmorphic styles
+  const getHref = (hash: string) => {
+    if (hash === "#blog") return "/blog";
+    if (hash === "#pricing") return "/pricing";
+    if (hash === "#solutions") return "/solution";
+    if (isHomepage) return hash;
+    return hash.startsWith("#") ? `/${hash}` : hash;
+  };
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(false);
+  const [mobileSolutionsOpen, setMobileSolutionsOpen] = useState(false);
+  const [mobileCompanyOpen, setMobileCompanyOpen] = useState(false);
+  
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const [solutionsOpen, setSolutionsOpen] = useState(false);
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
+
+  const closeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleCompanyEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setCompanyOpen(true);
+  };
+
+  const handleCompanyLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setCompanyOpen(false);
+    }, 150);
+  };
+
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
       }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+
+  // IntersectionObserver to highlight current active section as we scroll
+  useEffect(() => {
+    const sections = ["features", "solutions", "pricing", "blog", "contact"];
+    const observerOptions = {
+      root: null,
+      rootMargin: "-30% 0px -50% 0px",
+      threshold: 0.1,
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      sections.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) observer.unobserve(el);
+      });
+    };
   }, []);
 
   // Close mobile menu on path changes
   useEffect(() => {
-    setIsOpen(false);
+    setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Fallback values if backend data is not fully configured
-  const finalSiteName = siteName || "AI GreenTick";
+  // Find specific wrapper items or links dynamically from Strapi navItems
+  const featuresItem = navItems?.find(item => item.title.toLowerCase() === 'features');
+  const solutionsItem = navItems?.find(item => item.title.toLowerCase() === 'solutions');
+  const pricingItem = navItems?.find(item => item.title.toLowerCase() === 'pricing');
+  const blogItem = navItems?.find(item => item.title.toLowerCase() === 'blog');
+  const companyItem = navItems?.find(item => item.title.toLowerCase() === 'company');
+
+  // Hrefs mapping
+  const featuresHref = featuresItem?.path || getHref('#features');
+  const solutionsHref = solutionsItem?.path || getHref('#solutions');
+  const pricingHref = pricingItem?.path || getHref('#pricing');
+  const blogHref = blogItem?.path || getHref('#blog');
+  const companyHref = companyItem?.path || getHref('#about');
+
+  // Parse Logo
   const logo = headerData?.logo;
+  const logoImageSrc = logo?.image?.url ? getStrapiMediaUrl(logo.image.url) : null;
+  const logoAlt = logo?.image?.alternativeText || siteName || "AI GreenTick";
+  const logoHref = logo?.href || "/";
 
-  // Custom navigation items that match the user's design screenshot if backend is empty
-  const finalNavItems = navItems?.length
-    ? navItems
-    : [
-      {
-        id: 101,
-        title: "Features",
-        type: "WRAPPER" as const,
-        path: "#",
-        externalPath: null,
-        uiRouterKey: "features",
-        menuAttached: true,
-        order: 1,
-        collapsed: false,
-        items: [
-          { id: 201, title: "Feature Overview", type: "INTERNAL" as const, path: "/feature-overview", externalPath: null, uiRouterKey: "feature-overview", menuAttached: true, order: 1, collapsed: false },
-          { id: 202, title: "WhatsApp Broadcasts", type: "INTERNAL" as const, path: "/whatApp-Broadcasts", externalPath: null, uiRouterKey: "whats-app-broadcasts", menuAttached: true, order: 2, collapsed: false },
-          { id: 203, title: "AI Chatbot Builder", type: "INTERNAL" as const, path: "/ai-chatBot-builder", externalPath: null, uiRouterKey: "ai-chatbot-builder", menuAttached: true, order: 3, collapsed: false },
-        ]
-      },
-      {
-        id: 102,
-        title: "Solutions",
-        type: "INTERNAL" as const,
-        path: "/solution",
-        externalPath: null,
-        uiRouterKey: "solutions",
-        menuAttached: true,
-        order: 2,
-        collapsed: false,
-      },
-      {
-        id: 103,
-        title: "Pricing",
-        type: "INTERNAL" as const,
-        path: "/pricing",
-        externalPath: null,
-        uiRouterKey: "pricing",
-        menuAttached: true,
-        order: 3,
-        collapsed: false,
-      },
-      {
-        id: 104,
-        title: "Blog",
-        type: "INTERNAL" as const,
-        path: "/blog",
-        externalPath: null,
-        uiRouterKey: "blog",
-        menuAttached: true,
-        order: 4,
-        collapsed: false,
-      },
-      {
-        id: 105,
-        title: "Company",
-        type: "WRAPPER" as const,
-        path: "#",
-        externalPath: null,
-        uiRouterKey: "company",
-        menuAttached: true,
-        order: 5,
-        collapsed: false,
-        items: [
-          { id: 301, title: "About Us", type: "INTERNAL" as const, path: "/about", externalPath: null, uiRouterKey: "about-us", menuAttached: true, order: 1, collapsed: false },
-          { id: 302, title: "Contact", type: "INTERNAL" as const, path: "/contact", externalPath: null, uiRouterKey: "contact", menuAttached: true, order: 2, collapsed: false },
-        ]
-      }
-    ];
-
+  // Parse CTAs
   const ctas = headerData?.cta?.filter(item => item.label && item.href) || [];
+  
+  // Dynamic Text Link CTA (like Ecosystem)
+  const textLinkCta = ctas.find(item => !item.isButtonLink && item.type !== "PRIMARY");
+  const textLinkCtaLabel = textLinkCta?.label || "Ecosystem";
+  const textLinkCtaHref = textLinkCta?.href ? getHref(textLinkCta.href) : getHref('#faq');
 
-  // Custom fallback CTAs that match the login / try-for-free buttons in screenshot
-  const finalCtas = ctas.length
-    ? ctas
-    : [
-      { id: 901, label: "Login", href: "/login", isExternal: false, isButtonLink: false, type: "SECONDARY" as const },
-      { id: 902, label: "BOOK A DEMO", href: "/register", isExternal: false, isButtonLink: true, type: "PRIMARY" as const }
-    ];
+  // Dynamic Button CTA (like BOOK A DEMO)
+  const buttonCta = ctas.find(item => item.isButtonLink || item.type === "PRIMARY");
+  const buttonCtaLabel = buttonCta?.label || "BOOK A DEMO";
+  const buttonCtaHref = buttonCta?.href ? getHref(buttonCta.href) : getHref('#demo');
 
-  const logoImageSrc = logo?.image?.url ? getStrapiMediaUrl(logo.image.url) : "/logo-full.png";
-  const logoAlt = logo?.image?.alternativeText || finalSiteName;
+  // Descriptions helper for company items
+  const getCompanyDescription = (title: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('about')) return "Learn about our mission and story.";
+    if (t.includes('contact')) return "Get in touch with our team.";
+    if (t.includes('career')) return "Join us and build the future of AI.";
+    if (t.includes('trust') || t.includes('security') || t.includes('center')) return "Security, compliance, and systems.";
+    return "Read more details about this section.";
+  };
+
+  // Company sub-items fallback
+  const fallbackCompanyItems = [
+    { title: "About Us", path: getHref('#about') },
+    { title: "Contact Us", path: getHref('#contact') },
+    { title: "Careers", path: getHref('#careers') },
+    { title: "Trust Center", path: getHref('#faq') }
+  ];
+
+  const finalCompanyItems = companyItem?.items?.length
+    ? companyItem.items.map(item => ({ title: item.title, path: item.path }))
+    : fallbackCompanyItems;
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-350 ${isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-sm"
-          : "bg-transparent"
-        }`}
-    >
-      <div className="mx-auto max-w-7xl border-b border-[#C5C4C2] md:border-x">
-        <div className="flex h-16 items-stretch justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-[#ECEBE9]/95 backdrop-blur-sm py-2 px-4 sm:px-6 lg:px-8 border-b border-[#C5C4C2]/30">
+      <div className="mx-auto max-w-7xl relative">
+        {/* Background layer with clip-path and border */}
+        <div 
+          className="absolute inset-0 border border-[#C5C4C2] bg-[#ECEBE9] pointer-events-none z-0"
+          style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px))' }}
+        />
 
-          {/* Logo Area */}
-          <div className="flex items-center px-4 md:px-6 md:border-r border-[#C5C4C2] shrink-0">
-            <Link
-              href={logo?.href || "/"}
-              target={logo?.isExternal ? "_blank" : undefined}
-              rel={logo?.isExternal ? "noopener noreferrer" : undefined}
-              className="flex items-center gap-2 group"
-            >
+        {/* Desktop 9-Column Grid Navigation */}
+        <div className="hidden lg:grid grid-cols-9 h-16 w-full items-center select-none text-black font-sans relative z-10">
+          
+          {/* Col 1-2: Logo */}
+          <div className="col-span-2 h-full border-r border-[#C5C4C2] flex items-center pl-6">
+            <Link href={logoHref} className="hover:opacity-90 transition-opacity">
               {logoImageSrc ? (
-                <img
-                  src={logoImageSrc}
-                  alt={logoAlt}
-                  className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-                />
+                <img src={logoImageSrc} alt={logoAlt} className="h-9 w-auto select-none" />
               ) : (
-                <div className="flex items-center gap-2">
-                  {/* Premium Scalloped Green Seal Icon */}
-                  <svg className="w-7 h-7 text-[#00b050] filter drop-shadow-[0_1px_2px_rgba(0,176,80,0.15)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M12 2C11.3 2 10.7 2.4 10.4 3L9.8 4.2C9.6 4.6 9.1 4.9 8.6 4.9L7.2 4.7C6.5 4.6 5.9 5 5.6 5.7L5 6.9C4.8 7.4 4.3 7.7 3.8 7.7L2.4 7.7C1.7 7.7 1.1 8.2 1 8.9L0.9 10.3C0.8 10.8 0.4 11.2 0 11.4V12.6C0.4 12.8 0.8 13.2 0.9 13.7L1 15.1C1.1 15.8 1.7 16.3 2.4 16.3L3.8 16.3C4.3 16.3 4.8 16.6 5 17.1L5.6 18.3C5.9 19 6.5 19.4 7.2 19.3L8.6 19.1C9.1 19.1 9.6 19.4 9.8 19.8L10.4 21C10.7 21.6 11.3 22 12 22C12.7 22 13.3 21.6 13.6 21L14.2 19.8C14.4 19.4 14.9 19.1 15.4 19.1L16.8 19.3C17.5 19.4 18.1 19 18.4 18.3L19 17.1C19.2 16.6 19.7 16.3 20.2 16.3L21.6 16.3C22.3 16.3 22.9 15.8 23 15.1L23.1 13.7C23.2 13.2 23.6 12.8 24 12.6V11.4C23.6 11.2 23.2 10.8 23.1 10.3L23 8.9C22.9 8.2 22.3 7.7 21.6 7.7L20.2 7.7C19.7 7.7 19.2 7.4 19 6.9L18.4 5.7C18.1 5 17.5 4.6 16.8 4.7L15.4 4.9C14.9 4.9 14.4 4.6 14.2 4.2L13.6 3C13.3 2.4 12.7 2 12 2Z"
-                      fill="currentColor"
-                    />
-                    <path
-                      d="M9.5 15.5L6.5 12.5L7.91 11.09L9.5 12.67L16.09 6.09L17.5 7.5L9.5 15.5Z"
-                      fill="white"
-                    />
-                  </svg>
-                  <span className="text-xl font-bold tracking-tight flex items-center">
-                    <span className="text-[#00b050]">ai</span>
-                    <span className="text-black">GreenTick</span>
-                  </span>
-                </div>
+                <AiGreenTickLogo />
               )}
             </Link>
           </div>
-
-          {/* Desktop Navigation Items */}
-          <nav className="hidden md:flex items-center justify-center flex-1 px-8 gap-6">
-            {finalNavItems.map((item) => {
-              const href = item.path || item.externalPath || "#";
-              const label = item.title;
-              if (!href || !label) return null;
-              const hasSubItems = item.items && item.items.length > 0;
-              const isExternal = item.type === "EXTERNAL" || href.startsWith("http://") || href.startsWith("https://");
-              const isActive = pathname === href;
-
-              if (hasSubItems) {
-                return (
-                  <div key={item.id} className="relative group flex items-center h-full">
-                    <button className="flex items-center gap-1 text-sm font-medium text-neutral-700 hover:text-[#00b050] transition-colors cursor-pointer py-2">
-                      {label}
-                      <ChevronDown className="size-3.5 opacity-70 transition-transform duration-250 group-hover:rotate-180" />
-                    </button>
-                    {/* Beautiful Dropdown Card */}
-                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-56 rounded-xl shadow-xl bg-white border border-[#C5C4C2] py-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 z-50 transform scale-95 group-hover:scale-100">
-                      {item.items?.map((subItem) => {
-                        const subHref = subItem.path || subItem.externalPath || "#";
-                        const subIsExternal = subItem.type === "EXTERNAL" || subHref.startsWith("http");
-                        const subIsActive = pathname === subHref;
-
-                        return (
-                          <Link
-                            key={subItem.id}
-                            href={subHref}
-                            target={subIsExternal ? "_blank" : undefined}
-                            rel={subIsExternal ? "noopener noreferrer" : undefined}
-                            className={`block px-4 py-2.5 text-sm rounded-lg mx-1 transition-all ${subIsActive
-                                ? "text-[#00b050] bg-emerald-50 font-semibold"
-                                : "text-neutral-700 hover:text-[#00b050] hover:bg-neutral-50"
-                              }`}
-                          >
-                            {subItem.title}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.id}
-                  href={href}
-                  target={isExternal ? "_blank" : undefined}
-                  rel={isExternal ? "noopener noreferrer" : undefined}
-                  className={`text-sm font-medium transition-colors hover:text-[#00b050] flex items-center gap-1 ${isActive
-                      ? "text-[#00b050] font-semibold"
-                      : "text-neutral-700"
-                    }`}
-                >
-                  {label}
-                  {isExternal && <ExternalLink className="size-3 opacity-70" />}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Desktop CTA Action Buttons */}
-          <div className="hidden md:flex items-center gap-6 px-6 border-l border-[#C5C4C2] shrink-0">
-            {finalCtas.map((item) => {
-              const isButton = item.type === "PRIMARY" || item.isButtonLink || item.label?.toLowerCase() === "book a demo";
-
-              if (isButton) {
-                return (
-                  <Button
-                    key={item.id}
-                    asChild
-                    size="sm"
-                    className="bg-gradient-to-r from-[#00b050] to-[#005c2b] hover:from-[#00c853] hover:to-[#006e33] text-white hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm px-5 py-2 font-bold text-xs uppercase tracking-wider border-none"
-                    style={{
-                      clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)",
-                      borderRadius: "0px"
-                    }}
-                  >
-                    <Link
-                      href={item.href!}
-                      target={item.isExternal ? "_blank" : undefined}
-                      rel={item.isExternal ? "noopener noreferrer" : undefined}
-                    >
-                      {item.label}
-                    </Link>
-                  </Button>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href!}
-                  target={item.isExternal ? "_blank" : undefined}
-                  rel={item.isExternal ? "noopener noreferrer" : undefined}
-                  className="text-sm font-medium text-neutral-700 hover:text-[#00b050] transition-colors flex items-center"
-                >
-                  <span className="text-[#00b050] font-bold mr-1.5 font-mono">::</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Mobile Menu Toggle button */}
-          <div className="flex md:hidden items-center px-4 border-l border-[#C5C4C2] h-full">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              type="button"
-              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-700 hover:bg-neutral-100 hover:text-black focus:outline-none transition-colors"
-              aria-controls="mobile-menu"
-              aria-expanded={isOpen}
+ 
+          {/* Col 3-7: Navigation Links */}
+          <div className="col-span-5 h-full border-r border-[#C5C4C2] flex items-center justify-center gap-8 text-xs">
+            
+            {/* Features Option */}
+            <div
+              onMouseEnter={() => setFeaturesOpen(true)}
+              onMouseLeave={() => setFeaturesOpen(false)}
+              className="h-full flex items-center"
             >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-            </button>
+              <Link
+                href={featuresHref}
+                className={cn(
+                  "relative py-1 transition-colors font-bold flex items-center gap-1 cursor-pointer select-none",
+                  pathname.startsWith('/feature') ? "text-black font-extrabold" : (activeSection === 'features' ? "text-black" : "text-neutral-500 hover:text-black")
+                )}
+              >
+                {(pathname.startsWith('/feature') || activeSection === 'features') && (
+                  <>
+                    <span className="absolute -left-2 top-0 text-[#00b259] font-bold">┌</span>
+                    <span className="absolute -right-2 bottom-0 text-[#00b259] font-bold">┘</span>
+                  </>
+                )}
+                {featuresItem?.title || "Features"}
+                <ChevronDown className={cn("size-3.5 transition-transform duration-200", featuresOpen && "rotate-180")} />
+              </Link>
+              {featuresOpen && (
+                <div
+                  className="absolute top-full left-[22.222%] z-50 bg-[#ECEBE9] border border-[#C5C4C2] border-t-0 shadow-lg p-0 font-sans text-black overflow-hidden animate-in fade-in-0 duration-100"
+                  style={{ width: '55.556%' }}
+                >
+                  <FeaturesMegaMenu />
+                </div>
+              )}
+            </div>
+
+            {/* Solutions Option */}
+            <div
+              onMouseEnter={() => setSolutionsOpen(true)}
+              onMouseLeave={() => setSolutionsOpen(false)}
+              className="h-full flex items-center"
+            >
+              <Link
+                href={solutionsHref}
+                className={cn(
+                  "relative py-1 transition-colors font-bold flex items-center gap-1 cursor-pointer select-none",
+                  pathname.startsWith('/solution') ? "text-black font-extrabold" : (activeSection === 'solutions' ? "text-black" : "text-neutral-500 hover:text-black")
+                )}
+              >
+                {(pathname.startsWith('/solution') || activeSection === 'solutions') && (
+                  <>
+                    <span className="absolute -left-2 top-0 text-[#00b259] font-bold">┌</span>
+                    <span className="absolute -right-2 bottom-0 text-[#00b259] font-bold">┘</span>
+                  </>
+                )}
+                {solutionsItem?.title || "Solutions"}
+                <ChevronDown className={cn("size-3.5 transition-transform duration-200", solutionsOpen && "rotate-180")} />
+              </Link>
+              {solutionsOpen && (
+                <div
+                  className="absolute top-full left-[22.222%] z-50 bg-[#ECEBE9] border border-[#C5C4C2] border-t-0 shadow-lg p-0 font-sans text-black overflow-hidden animate-in fade-in-0 duration-100"
+                  style={{ width: '55.556%' }}
+                >
+                  <SolutionsMegaMenu />
+                </div>
+              )}
+            </div>
+
+            {/* Pricing Link */}
+            <Link
+              href={pricingHref}
+              className={cn(
+                "relative py-1 transition-colors font-bold flex items-center gap-1.5",
+                pathname.startsWith('/pricing') ? "text-black font-extrabold" : (activeSection === 'pricing' ? "text-black" : "text-neutral-500 hover:text-black")
+              )}
+            >
+              {(pathname.startsWith('/pricing') || activeSection === 'pricing') && (
+                <>
+                  <span className="absolute -left-2 top-0 text-[#00b259] font-bold">┌</span>
+                  <span className="absolute -right-2 bottom-0 text-[#00b259] font-bold">┘</span>
+                </>
+              )}
+              {pricingItem?.title || "Pricing"}
+            </Link>
+
+            {/* Blog Link */}
+            <Link
+              href={blogHref}
+              className={cn(
+                "relative py-1 transition-colors font-bold flex items-center gap-1.5",
+                pathname.startsWith('/blog') ? "text-black font-extrabold" : (activeSection === 'blog' ? "text-black" : "text-neutral-500 hover:text-black")
+              )}
+            >
+              {(pathname.startsWith('/blog') || activeSection === 'blog') && (
+                <>
+                  <span className="absolute -left-2 top-0 text-[#00b259] font-bold">┌</span>
+                  <span className="absolute -right-2 bottom-0 text-[#00b259] font-bold">┘</span>
+                </>
+              )}
+              {blogItem?.title || "Blog"}
+            </Link>
+
+            {/* Company Dropdown Option */}
+            <DropdownMenu modal={false} open={companyOpen} onOpenChange={setCompanyOpen}>
+              <div
+                onMouseEnter={handleCompanyEnter}
+                onMouseLeave={handleCompanyLeave}
+                className="h-full flex items-center"
+              >
+                <DropdownMenuTrigger asChild>
+                  <Link
+                    href={companyHref}
+                    className={cn(
+                      "relative py-1 transition-colors font-bold flex items-center gap-1 cursor-pointer select-none",
+                      (activeSection === 'about' || activeSection === 'contact') ? "text-black" : "text-neutral-500 hover:text-black"
+                    )}
+                  >
+                    {(activeSection === 'about' || activeSection === 'contact') && (
+                      <>
+                        <span className="absolute -left-2 top-0 text-[#00b259] font-bold">┌</span>
+                        <span className="absolute -right-2 bottom-0 text-[#00b259] font-bold">┘</span>
+                      </>
+                    )}
+                    {companyItem?.title || "Company"}
+                    <ChevronDown className={cn("size-3.5 transition-transform duration-200", companyOpen && "rotate-180")} />
+                  </Link>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="center"
+                  sideOffset={14}
+                  className="bg-[#ECEBE9] border border-[#C5C4C2] rounded-none shadow-lg p-1 w-64 font-sans text-black"
+                  onMouseEnter={handleCompanyEnter}
+                  onMouseLeave={handleCompanyLeave}
+                >
+                  {finalCompanyItems.map((item, index) => (
+                    <DropdownMenuItem asChild key={index}>
+                      <Link
+                        href={item.path}
+                        className="px-4 py-2 hover:bg-[#00b259]/10 text-xs text-neutral-600 transition-colors flex flex-col gap-0.5 border-b border-[#C5C4C2]/30 last:border-b-0 cursor-pointer"
+                      >
+                        <span className="font-bold flex items-center gap-1 text-black">
+                          <span className="text-[#00b259]">::</span> {item.title}
+                        </span>
+                        <span className="text-[10px] text-neutral-500 font-normal leading-normal">
+                          {getCompanyDescription(item.title)}
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </div>
+            </DropdownMenu>
+
+          </div>
+
+          {/* Col 8-9: Ecosystem & Book a Demo Button */}
+          <div className="col-span-2 h-full flex items-center justify-between px-6 gap-4">
+            <Link
+              href={textLinkCtaHref}
+              className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 hover:text-black transition-colors"
+            >
+              <span className="text-[#00b259] font-bold tracking-tight">::</span> {textLinkCtaLabel}
+            </Link>
+            <Link
+              href={buttonCtaHref}
+              className="px-6 py-2 text-xs font-black text-white bg-gradient-to-r from-[#00b259] to-[#005c2b] hover:opacity-90 transition-opacity shadow-xs shrink-0 text-center"
+              style={{
+                clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)'
+              }}
+            >
+              {buttonCtaLabel.toUpperCase()}
+            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Mobile menu dropdown drawer */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[450px] border-b border-[#C5C4C2] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
-          } bg-background`}
-        id="mobile-menu"
-      >
-        <div className="space-y-1 px-4 pb-6 pt-3">
-          {finalNavItems.map((item) => {
-            const href = item.path || item.externalPath || "#";
-            const label = item.title;
-            if (!href || !label) return null;
-            const hasSubItems = item.items && item.items.length > 0;
-            const isExternal = item.type === "EXTERNAL" || href.startsWith("http://") || href.startsWith("https://");
-            const isActive = pathname === href;
-
-            return (
-              <div key={item.id} className="space-y-1">
-                {hasSubItems ? (
-                  <>
-                    <div className="px-3 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-500">
-                      {label}
-                    </div>
-                    <div className="pl-3 border-l border-neutral-200 ml-3 space-y-1">
-                      {item.items?.map((subItem) => {
-                        const subHref = subItem.path || subItem.externalPath || "#";
-                        const subIsExternal = subItem.type === "EXTERNAL" || subHref.startsWith("http");
-                        const subIsActive = pathname === subHref;
-
-                        return (
-                          <Link
-                            key={subItem.id}
-                            href={subHref}
-                            target={subIsExternal ? "_blank" : undefined}
-                            rel={subIsExternal ? "noopener noreferrer" : undefined}
-                            className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${subIsActive
-                                ? "text-[#00b050] bg-emerald-50 font-semibold"
-                                : "text-neutral-700 hover:text-black hover:bg-neutral-50"
-                              }`}
-                          >
-                            {subItem.title}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <Link
-                    href={href}
-                    target={isExternal ? "_blank" : undefined}
-                    rel={isExternal ? "noopener noreferrer" : undefined}
-                    className={`block rounded-md px-3 py-2 text-base font-medium transition-colors ${isActive
-                        ? "text-[#00b050] bg-emerald-50 font-semibold"
-                        : "text-neutral-700 hover:text-black hover:bg-neutral-50"
-                      }`}
-                  >
-                    <span className="flex items-center justify-between">
-                      {label}
-                      {isExternal && <ExternalLink className="size-4 opacity-70" />}
-                    </span>
-                  </Link>
-                )}
-              </div>
-            );
-          })}
-
-          {finalCtas.length > 0 && (
-            <div className="border-t border-neutral-200 mt-4 pt-4 flex flex-col gap-2">
-              {finalCtas.map((item) => {
-                const isButton = item.type === "PRIMARY" || item.isButtonLink || item.label?.toLowerCase() === "book a demo";
-
-                if (isButton) {
-                  return (
-                    <Button
-                      key={item.id}
-                      asChild
-                      className="w-full bg-gradient-to-r from-[#00b050] to-[#005c2b] hover:from-[#00c853] hover:to-[#006e33] text-white py-2.5 rounded-lg font-semibold border-none"
-                    >
-                      <Link
-                        href={item.href!}
-                        target={item.isExternal ? "_blank" : undefined}
-                        rel={item.isExternal ? "noopener noreferrer" : undefined}
-                        className="justify-center"
-                      >
-                        {item.label}
-                      </Link>
-                    </Button>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href!}
-                    target={item.isExternal ? "_blank" : undefined}
-                    rel={item.isExternal ? "noopener noreferrer" : undefined}
-                    className="block text-center py-2 text-base font-medium text-neutral-700 hover:text-black"
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+        {/* Mobile Navigation Header */}
+        <div className="lg:hidden flex h-16 items-center justify-between px-4 text-black font-sans relative z-10">
+          <Link href={logoHref} className="hover:opacity-90 transition-opacity">
+            {logoImageSrc ? (
+              <img src={logoImageSrc} alt={logoAlt} className="h-8 w-auto select-none" />
+            ) : (
+              <AiGreenTickLogo />
+            )}
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-black hover:bg-black/5 rounded-md transition-colors"
+          >
+            {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
         </div>
+
+        {/* Mobile Navigation Dropdown */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden absolute top-16 left-0 right-0 bg-[#ECEBE9] border-b border-[#C5C4C2] z-50 flex flex-col divide-y divide-[#C5C4C2] border-t border-[#C5C4C2] font-mono">
+            
+            {/* Features Mobile Option */}
+            <div className="flex flex-col">
+              <button
+                onClick={() => setMobileFeaturesOpen(!mobileFeaturesOpen)}
+                className="w-full text-center px-6 py-4 text-sm font-bold text-neutral-800 hover:bg-black/5 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">
+                  {pathname.startsWith('/feature') && <span className="text-[#00b259] font-bold">&gt;</span>}
+                  {featuresItem?.title || "Features"}
+                </span>
+                <ChevronDown className={cn("size-4 transition-transform duration-200", mobileFeaturesOpen && "rotate-180")} />
+              </button>
+              {mobileFeaturesOpen && (
+                <div className="bg-[#E4E3E0] flex flex-col divide-y divide-[#C5C4C2]/50 border-t border-[#C5C4C2]">
+                  {featuresItem?.items?.length ? (
+                    featuresItem.items.map((sub, i) => (
+                      <Link
+                        key={i}
+                        href={sub.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> {sub.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <>
+                      <Link
+                        href="/feature-overview"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Unified Inbox
+                      </Link>
+                      <Link
+                        href="/whatApp-Broadcasts"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Ads Manager
+                      </Link>
+                      <Link
+                        href="/whatApp-Broadcasts"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> WhatsApp Broadcasting
+                      </Link>
+                      <Link
+                        href="/whatApp-Broadcasts"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Campaign Drips
+                      </Link>
+                      <Link
+                        href="/ai-chatBot-builder"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Chatbot Builder
+                      </Link>
+                      <Link
+                        href="/feature-overview"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> AI Analytics
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Solutions Mobile Option */}
+            <div className="flex flex-col">
+              <button
+                onClick={() => setMobileSolutionsOpen(!mobileSolutionsOpen)}
+                className="w-full text-center px-6 py-4 text-sm font-bold text-neutral-800 hover:bg-black/5 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">
+                  {pathname.startsWith('/solution') && <span className="text-[#00b259] font-bold">&gt;</span>}
+                  {solutionsItem?.title || "Solutions"}
+                </span>
+                <ChevronDown className={cn("size-4 transition-transform duration-200", mobileSolutionsOpen && "rotate-180")} />
+              </button>
+              {mobileSolutionsOpen && (
+                <div className="bg-[#E4E3E0] flex flex-col divide-y divide-[#C5C4C2]/50 border-t border-[#C5C4C2]">
+                  {solutionsItem?.items?.length ? (
+                    solutionsItem.items.map((sub, i) => (
+                      <Link
+                        key={i}
+                        href={sub.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> {sub.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <>
+                      {/* Consumer Verticals */}
+                      <div className="px-8 py-2 text-[9px] font-black text-neutral-400 bg-[#ECEBE9] tracking-wider text-center">
+                        :: CONSUMER VERTICALS
+                      </div>
+                      <Link
+                        href="/solution?industry=ecommerce"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> eCommerce & Retail
+                      </Link>
+                      <Link
+                        href="/solution?industry=realestate"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Real Estate
+                      </Link>
+                      <Link
+                        href="/solution?industry=travel"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Travel & Hospitality
+                      </Link>
+                      
+                      {/* Professional Services */}
+                      <div className="px-8 py-2 text-[9px] font-black text-neutral-400 bg-[#ECEBE9] tracking-wider border-t border-[#C5C4C2]/50 text-center">
+                        :: PROFESSIONAL SERVICES
+                      </div>
+                      <Link
+                        href="/solution?industry=healthcare"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Healthcare & Wellness
+                      </Link>
+                      <Link
+                        href="/solution?industry=education"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Education & EdTech
+                      </Link>
+                      <Link
+                        href="/solution?industry=finance"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-10 py-3 text-xs text-neutral-700 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="text-[#00b259]">::</span> Banking & Finance
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Pricing Mobile Option */}
+            <Link
+              href={pricingHref}
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-6 py-4 text-sm font-bold text-neutral-800 hover:bg-black/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              {pathname.startsWith('/pricing') && <span className="text-[#00b259] font-bold">&gt;</span>}
+              {pricingItem?.title || "Pricing"}
+            </Link>
+
+            {/* Blog Mobile Option */}
+            <Link
+              href={blogHref}
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-6 py-4 text-sm font-bold text-neutral-800 hover:bg-black/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              {pathname.startsWith('/blog') && <span className="text-[#00b259] font-bold">&gt;</span>}
+              {blogItem?.title || "Blog"}
+            </Link>
+
+            {/* Company Mobile Option */}
+            <div className="flex flex-col">
+              <button
+                onClick={() => setMobileCompanyOpen(!mobileCompanyOpen)}
+                className="w-full text-center px-6 py-4 text-sm font-bold text-neutral-800 hover:bg-black/5 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">
+                  {(pathname.startsWith('/about') || pathname.startsWith('/contact')) && <span className="text-[#00b259] font-bold">&gt;</span>}
+                  {companyItem?.title || "Company"}
+                </span>
+                <ChevronDown className={cn("size-4 transition-transform duration-200", mobileCompanyOpen && "rotate-180")} />
+              </button>
+              {mobileCompanyOpen && (
+                <div className="bg-[#E4E3E0] flex flex-col divide-y divide-[#C5C4C2]/50 border-t border-[#C5C4C2]">
+                  {finalCompanyItems.map((item, idx) => (
+                    <Link
+                      key={idx}
+                      href={item.path}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="px-10 py-3 text-xs text-neutral-600 hover:bg-black/5 flex items-center justify-center gap-1.5"
+                    >
+                      <span className="text-[#00b259]">::</span> {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Ecosystem Option */}
+            <Link
+              href={textLinkCtaHref}
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-6 py-4 text-sm font-bold text-neutral-800 hover:bg-black/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span className="text-[#00b259] font-bold">::</span> {textLinkCtaLabel}
+            </Link>
+
+            {/* Book a Demo Option */}
+            <div className="px-6 py-4 flex justify-center">
+              <Link
+                href={buttonCtaHref}
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center py-3 text-xs font-black text-white bg-gradient-to-r from-[#00b259] to-[#005c2b] hover:opacity-90 transition-opacity shadow-xs"
+                style={{
+                  clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)'
+                }}
+              >
+                {buttonCtaLabel.toUpperCase()}
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

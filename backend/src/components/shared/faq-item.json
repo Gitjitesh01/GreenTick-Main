@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_shared_faq_items",
+  "info": {
+    "displayName": "FAQ Section"
+  },
+  "options": {},
+  "attributes": {
+    "badge": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "faqCategories": {
+      "type": "component",
+      "component": "shared.faq-categories",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

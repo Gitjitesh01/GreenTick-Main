@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_shared_rows",
+  "info": {
+    "displayName": "rows"
+  },
+  "options": {},
+  "attributes": {
+    "feature": {
+      "type": "string"
+    },
+    "aisensy": {
+      "type": "string"
+    },
+    "wati": {
+      "type": "string"
+    },
+    "interakt": {
+      "type": "string"
+    },
+    "aigreentick": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

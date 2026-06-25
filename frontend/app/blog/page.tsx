@@ -87,10 +87,10 @@ export default function BlogIndexPage() {
           <span className="inline-block px-3 py-1 text-xs font-bold text-[#00b259] border border-[#00b259] bg-[#00b259]/10 font-mono tracking-wider">
             :: {blogPageData?.hero_badge || 'INTEL & KNOWLEDGE HUB'} ::
           </span>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-medium font-serif tracking-tight leading-none text-black">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-sans tracking-tight leading-none text-black">
             {blogPageData?.hero_title || 'The AI Greentick Blog'}
           </h1>
-          <p className="text-neutral-500 max-w-2xl mx-auto text-sm sm:text-base font-mono">
+          <p className="text-neutral-500 max-w-2xl mx-auto text-sm sm:text-base font-sans">
             {blogPageData?.hero_description || 'Deep dives into WhatsApp API automation, customer engagement strategies, and scaling business workflows using conversational AI.'}
           </p>
         </div>
@@ -134,7 +134,7 @@ export default function BlogIndexPage() {
                       </span>
                     </div>
 
-                    <h2 className="text-xl sm:text-2xl font-black text-black group-hover:text-[#00b259] transition-colors leading-tight font-serif">
+                    <h2 className="text-xl sm:text-2xl font-bold text-black group-hover:text-[#00b259] transition-colors leading-tight font-sans">
                       {featuredPost.title}
                     </h2>
 
@@ -246,7 +246,7 @@ export default function BlogIndexPage() {
                         </span>
                       </div>
 
-                      <h3 className="text-sm font-black text-black group-hover:text-[#00b259] transition-colors line-clamp-2 leading-snug font-serif">
+                      <h3 className="text-sm font-bold text-black group-hover:text-[#00b259] transition-colors line-clamp-2 leading-snug font-sans">
                         {post.title}
                       </h3>
 

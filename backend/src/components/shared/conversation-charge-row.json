@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_shared_conversation_charge_rows",
+  "info": {
+    "displayName": "Conversation Charge Row"
+  },
+  "options": {},
+  "attributes": {
+    "category": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "rate": {
+      "type": "string"
+    },
+    "color": {
+      "type": "enumeration",
+      "enum": [
+        "red",
+        "blue",
+        "yellow",
+        "green"
+      ]
+    }
+  },
+  "config": {}
+}

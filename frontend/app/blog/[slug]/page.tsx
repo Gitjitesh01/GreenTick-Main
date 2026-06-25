@@ -2,15 +2,14 @@
 
 import { use, useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Clock, Calendar, CheckCircle, Mail } from 'lucide-react'
+import { ArrowLeft, Clock, Calendar } from 'lucide-react'
 import { fetchDynamicBlogPostBySlugOrId, fetchDynamicBlogPosts, type NormalizedBlogPost } from '@/lib/api'
+import NewsletterForm from '@/components/NewsletterForm'
 
 export default function BlogPostDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [email, setEmail] = useState('')
-  const [subscribed, setSubscribed] = useState(false)
   const [dynamicPost, setDynamicPost] = useState<NormalizedBlogPost | null>(null)
   const [loading, setLoading] = useState(true)
   const [allArticles, setAllArticles] = useState<NormalizedBlogPost[]>([])
@@ -94,13 +93,7 @@ export default function BlogPostDetailPage({ params }: { params: Promise<{ slug:
     )
   }
 
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (email) {
-      setSubscribed(true)
-      setEmail('')
-    }
-  }
+
 
   return (
     <div className="flex-1 flex flex-col bg-[#ECEBE9] text-black">
@@ -141,7 +134,7 @@ export default function BlogPostDetailPage({ params }: { params: Promise<{ slug:
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-medium font-serif leading-tight tracking-tight text-black">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-sans leading-tight tracking-tight text-black">
                 {post.title}
               </h1>
 
@@ -174,64 +167,19 @@ export default function BlogPostDetailPage({ params }: { params: Promise<{ slug:
 
             {/* Article Content */}
             <div 
-              className="font-serif text-neutral-800 leading-relaxed text-base sm:text-lg border-b border-[#C5C4C2]/40 pb-12
-                [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:font-medium [&_h2]:text-black [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:tracking-tight
+              className="font-sans text-neutral-800 leading-relaxed text-base sm:text-lg border-b border-[#C5C4C2]/40 pb-12
+                [&_h2]:font-sans [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-black [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:tracking-tight
                 [&_p]:mb-6 [&_p]:text-neutral-700 [&_p]:leading-relaxed
                 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6 [&_ul]:font-sans [&_ul]:text-sm [&_ul]:text-neutral-600
                 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-6 [&_ol]:font-sans [&_ol]:text-sm [&_ol]:text-neutral-600
                 [&_li]:mb-2
-                [&_blockquote]:border-l-4 [&_blockquote]:border-[#00b259] [&_blockquote]:pl-6 [&_blockquote]:my-8 [&_blockquote]:italic [&_blockquote]:text-black [&_blockquote]:text-xl [&_blockquote]:font-serif"
+                [&_blockquote]:border-l-4 [&_blockquote]:border-[#00b259] [&_blockquote]:pl-6 [&_blockquote]:my-8 [&_blockquote]:italic [&_blockquote]:text-black [&_blockquote]:text-xl [&_blockquote]:font-sans"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           </article>
 
           {/* Newsletter Form */}
-          <section 
-            className="border border-[#C5C4C2] bg-[#ECEBE9] p-8 sm:p-12 text-center space-y-6 font-mono"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px))' }}
-          >
-            <div className="flex flex-col items-center gap-3">
-              <span className="px-2 py-0.5 text-[10px] font-bold text-[#00b259] border border-[#00b259]/30 bg-[#00b259]/5">
-                :: NEWSLETTER SUBSCRIBE ::
-              </span>
-              <h3 className="text-xl sm:text-2xl font-serif font-medium text-black">
-                Get Future Insights Direct to Inbox
-              </h3>
-              <p className="text-neutral-500 text-xs max-w-md mx-auto leading-relaxed">
-                Join 5,000+ businesses receiving WhatsApp API strategies, scaling checklists, and automation hacks every fortnight.
-              </p>
-            </div>
-
-            {subscribed ? (
-              <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#00b259] py-3 bg-[#00b259]/5 border border-[#00b259]/20 max-w-sm mx-auto">
-                <CheckCircle className="size-4" />
-                <span>YOU ARE SUBSCRIBED! CHECK YOUR EMAIL.</span>
-              </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <div className="relative flex-grow">
-                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-neutral-400">
-                    <Mail className="size-4" />
-                  </span>
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter business email address..."
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-xs border border-[#C5C4C2] bg-[#ECEBE9] text-black rounded-none outline-none focus:border-[#00b259] transition-colors placeholder:text-neutral-400"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 text-xs font-black text-white bg-gradient-to-r from-[#00b259] to-[#005c2b] hover:opacity-90 transition-opacity shadow-xs shrink-0 cursor-pointer"
-                  style={{ clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)' }}
-                >
-                  SUBSCRIBE
-                </button>
-              </form>
-            )}
-          </section>
+          <NewsletterForm source="blog-details" />
 
           {/* Related Articles */}
           <section className="space-y-6 font-mono">
@@ -265,7 +213,7 @@ export default function BlogPostDetailPage({ params }: { params: Promise<{ slug:
                       <span>{rPost.readTime}</span>
                     </div>
 
-                    <h4 className="text-xs font-black text-black group-hover:text-[#00b259] transition-colors line-clamp-2 font-serif leading-snug">
+                    <h4 className="text-xs font-bold text-black group-hover:text-[#00b259] transition-colors line-clamp-2 font-sans leading-snug">
                       {rPost.title}
                     </h4>
 

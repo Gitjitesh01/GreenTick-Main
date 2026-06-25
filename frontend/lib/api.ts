@@ -31,12 +31,19 @@ export interface HeaderComponent {
   cta: NavLink[];
 }
 
+export interface OurProductItem {
+  id: number;
+  name: string;
+  product_image?: StrapiImage[] | StrapiImage | null;
+}
+
 export interface FooterComponent {
   id: number;
   text: string | null;
   logo: LogoLink | null;
   navItems: NavLink[];
   socialLinks: LogoLink[];
+  Our_Product?: OurProductItem[] | null;
 }
 
 export interface NavigationPluginItem {
@@ -90,6 +97,7 @@ export async function fetchGlobalSettings(): Promise<GlobalSettings | null> {
     "populate[footer][populate][logo][populate]": "*",
     "populate[footer][populate][navItems][populate]": "*",
     "populate[footer][populate][socialLinks][populate]": "*",
+    "populate[footer][populate][Our_Product][populate]": "*",
   });
 
   const url = `${STRAPI_URL}/api/global?${queryParams.toString()}`;
@@ -597,6 +605,187 @@ function convertBoldItalic(text: string): string {
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
     .replace(/__(.*?)__/g, "<strong>$1</strong>")
     .replace(/_(.*?)_/g, "<em>$1</em>");
+}
+
+export interface StrapiPricingHero {
+  id: number;
+  badge: string | null;
+  title: string | null;
+  description: any[] | null;
+}
+
+export interface StrapiPricingPlansSection {
+  id: number;
+  sectionBadge: string | null;
+  sectionTitle: string | null;
+  sectionDescription: string | null;
+  annualDiscount: number | null;
+  enableCurrencyToggle: boolean;
+  enableYearlyToggle: boolean;
+}
+
+export interface StrapiFeatureItem {
+  id: number;
+  text: string | null;
+}
+
+export interface StrapiPricingPlan {
+  id: number;
+  documentId: string;
+  title: string;
+  description: string | null;
+  buttonText: string;
+  buttonLink: string | null;
+  sortOrder: number | null;
+  borderHighlight: boolean;
+  monthlyPrice: number | null;
+  yearlyPrice: number | null;
+  currency: 'INR (₹)' | 'USD ($)' | null;
+  planType: 'starter' | 'growth' | 'business' | 'enterprise' | null;
+  features: StrapiFeatureItem[] | null;
+  icon: StrapiImage | null;
+}
+
+export interface StrapiConversationChargeRow {
+  id: number;
+  category: string;
+  description: string | null;
+  rate: string;
+  color: 'red' | 'blue' | 'yellow' | 'green' | null;
+}
+
+export interface StrapiMetaPricingSection {
+  id: number;
+  badge: string | null;
+  title: string | null;
+  description: any[] | null;
+  ctaText: string | null;
+  ctaLink: string | null;
+  rows: StrapiConversationChargeRow[] | null;
+}
+
+export interface StrapiComparisonRow {
+  id: number;
+  feature: string;
+  aisensy: string | null;
+  wati: string | null;
+  interakt: string | null;
+  aigreentick: string | null;
+}
+
+export interface StrapiComparisonSection {
+  id: number;
+  badge: string | null;
+  title: string | null;
+  description: string | null;
+  rows: StrapiComparisonRow[] | null;
+}
+
+export interface StrapiFAQQuestionItem {
+  id: number;
+  question: string;
+  answer: any[] | null;
+}
+
+export interface StrapiFAQCategory {
+  id: number;
+  title: string;
+  items: StrapiFAQQuestionItem[] | null;
+}
+
+export interface StrapiFAQSection {
+  id: number;
+  badge: string | null;
+  title: string | null;
+  description: any[] | null;
+  faqCategories: StrapiFAQCategory[] | null;
+}
+
+export interface StrapiPricingPageData {
+  id: number;
+  documentId: string;
+  Pricing_Hero: StrapiPricingHero | null;
+  pricingPlansSection: StrapiPricingPlansSection | null;
+  pricing_plans: StrapiPricingPlan[] | null;
+  metaConversationFees: StrapiMetaPricingSection | null;
+  comparison_Section: StrapiComparisonSection | null;
+  FAQ: StrapiFAQSection | null;
+}
+
+export interface StrapiPricingResponse {
+  data: StrapiPricingPageData | null;
+  meta: any;
+}
+
+export async function fetchPricingPageData(): Promise<StrapiPricingPageData | null> {
+  const queryParams = new URLSearchParams({
+    "populate[Pricing_Hero][populate]": "*",
+    "populate[pricingPlansSection][populate]": "*",
+    "populate[pricing_plans][populate][features]": "*",
+    "populate[pricing_plans][populate][icon]": "*",
+    "populate[metaConversationFees][populate][rows]": "*",
+    "populate[comparison_Section][populate][rows]": "*",
+    "populate[FAQ][populate][faqCategories][populate][items]": "*",
+  });
+
+  const url = `${STRAPI_URL}/api/pricing?${queryParams.toString()}`;
+
+  try {
+    const res = await fetch(url, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.warn(`Failed to fetch pricing page data, response status: ${res.status}`);
+      return null;
+    }
+
+    const json: StrapiPricingResponse = await res.json();
+    return json.data;
+  } catch (error: any) {
+    if (error && (error.digest === "DYNAMIC_SERVER_USAGE" || error.message?.includes("Dynamic server usage"))) {
+      throw error;
+    }
+    console.error("Error fetching pricing page data from Strapi:", error);
+    return null;
+  }
+}
+
+/**
+ * Subscribes a business email address to the newsletter
+ */
+export async function subscribeToNewsletter(email: string, source: string = "website"): Promise<{ success: boolean; message?: string }> {
+  const url = `${STRAPI_URL}/api/newsletter-subscribers`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: {
+          email,
+          statusOfSubscriber: "subscribed",
+          subscribedAt: new Date().toISOString(),
+          source,
+          verified: true,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const errorJson = await res.json().catch(() => ({}));
+      return { 
+        success: false, 
+        message: errorJson.error?.message || "Failed to subscribe. Please try again." 
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error subscribing to newsletter:", error);
+    return { success: false, message: "Network error. Please try again later." };
+  }
 }
 
 

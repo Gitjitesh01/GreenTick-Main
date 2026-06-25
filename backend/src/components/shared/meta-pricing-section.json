@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_shared_meta_pricing_sections",
+  "info": {
+    "displayName": "Meta Pricing Section"
+  },
+  "options": {},
+  "attributes": {
+    "badge": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaLink": {
+      "type": "string"
+    },
+    "rows": {
+      "type": "component",
+      "component": "shared.conversation-charge-row",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

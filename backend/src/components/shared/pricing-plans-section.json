@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_shared_pricing_plans_sections",
+  "info": {
+    "displayName": "Pricing Plans Section"
+  },
+  "options": {},
+  "attributes": {
+    "sectionBadge": {
+      "type": "string"
+    },
+    "sectionTitle": {
+      "type": "string"
+    },
+    "sectionDescription": {
+      "type": "text"
+    },
+    "annualDiscount": {
+      "type": "integer"
+    },
+    "enableCurrencyToggle": {
+      "type": "boolean"
+    },
+    "enableYearlyToggle": {
+      "type": "boolean"
+    }
+  },
+  "config": {}
+}
